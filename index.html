@@ -168,6 +168,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
   line-height:1.25}
 .card .mdl{display:block;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-2);margin-top:2px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .mdl .com,.dhead .mo .com{color:var(--ink-3)}
 .card .meta{display:block;font-size:11.5px;color:var(--ink-3);margin-top:3px;letter-spacing:.03em;
   text-transform:uppercase;font-weight:600}
 .cel{font-family:"IBM Plex Mono",monospace;font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--ink-2)}
@@ -362,6 +363,16 @@ const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 const norm = s => String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
 const fmt = n => n==null?null:'$'+Math.round(n).toLocaleString('en-US');
 
+// Numero de fabrica (order code) con el modelo comercial entre parentesis.
+// Si son el mismo texto, o falta uno, muestra solo el que hay.
+function etiqueta(r){
+  const fab = (r.mo || r.m || '').trim();
+  const com = (r.mm || '').trim();
+  if (!com || norm(com) === norm(fab)) return esc(fab || com);
+  if (!fab) return esc(com);
+  return esc(fab) + ' <span class="com">(' + esc(com) + ')</span>';
+}
+
 // marca de equipo: la hoja Crown 2022 es todo CROWN
 ROWS.forEach(r => { r.mk = r.mk || 'CROWN'; r._ah = (()=>{ const t=r.va||'';
     let m=/(\d[\d,]*)\s*AH/i.exec(t); if(m) return +m[1].replace(/,/g,'');
@@ -517,7 +528,7 @@ function renderList(){
       <span class="thumb">${esc(short(r.f))}</span>
       <span>
         <span class="fam">${esc(r.f)}</span>
-        <span class="mdl">${esc(r.mm || r.m)}</span>
+        <span class="mdl">${etiqueta(r)}</span>
         <span class="meta">${esc(brandOf(r.s))}${
           MODE === 'bat'
             ? ' · ' + (r._eq.length === 1 ? esc(r._eq[0].e) : r._eq.length + ' equipos')
@@ -539,7 +550,7 @@ function render(){ renderFacets(); renderActive(); renderList(); }
 const dlg = $('#dlg');
 function detail(r){
   $('#d-fam').textContent = r.f || '—';
-  $('#d-model').textContent = r.mm || r.m || '';
+  $('#d-model').innerHTML = etiqueta(r);
   $('#d-price').innerHTML = r.pr==null
     ? `<span style="font-size:15px;color:var(--warn);font-style:italic">Sin precio en los listados</span>`
     : fmt(r.pr) + ` <span style="font-size:12px;color:var(--ink-3);font-weight:500">USD</span>`;
